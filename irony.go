@@ -184,7 +184,7 @@ func (irony *Irony) Complete(file string, line, col uint32, flags []string) {
 	irony.resetCache()
 	td := irony.cache.GenTU(file, flags, irony.unsavedFiles)
 	if td != nil {
-		opts := clang.DefaultCodeCompleteOptions() & (^uint32(clang.CodeComplete_IncludeCodePatterns))
+		opts := clang.DefaultCodeCompleteOptions()
 		irony.actCmplRes = td.tu.CodeCompleteAt(file, line, col, irony.unsavedFiles, opts)
 		defer td.Dispose()
 	}

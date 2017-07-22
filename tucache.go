@@ -54,8 +54,9 @@ func NewTuCache() *TUCache {
 
 	tc.index = clang.NewIndex(0, 0)
 	tc.parseOptions = clang.DefaultEditingTranslationUnitOptions()
-	tc.parseOptions |= clang.TranslationUnit_DetailedPreprocessingRecord
-	tc.parseOptions |= clang.TranslationUnit_KeepGoing
+	tc.parseOptions |= clang.TranslationUnit_DetailedPreprocessingRecord |
+		clang.TranslationUnit_Incomplete | clang.TranslationUnit_CreatePreambleOnFirstParse |
+		clang.TranslationUnit_KeepGoing | clang.TranslationUnit_IncludeBriefCommentsInCodeCompletion
 	tc.tuMap = make(map[string]*TUData)
 	return &tc
 }
@@ -100,13 +101,15 @@ func (tc *TUCache) deleteTU(filename string) {
 
 func (tc *TUCache) Parse(filename string, flags []string, unsaved []clang.UnsavedFile) *TUData {
 	var tu clang.TranslationUnit
+
+	flags = append([]string{"clang"}, flags...)
 	if ClangHeaderDir != "" {
 		buildinFlags := []string{"-isystem", ClangHeaderDir}
-		flags = append(buildinFlags, flags...)
+		flags = append(flags, buildinFlags...)
 	}
 	td := tc.findTU(filename, flags)
 	if td == nil {
-		errCode := tc.index.ParseTranslationUnit2(filename, flags, unsaved, tc.parseOptions, &tu)
+		errCode := tc.index.ParseTranslationUnit2FullArgv(filename, flags, unsaved, tc.parseOptions, &tu)
 		if !tu.IsValid() {
 			logInfo("Parse failed: %d\n", errCode)
 			return nil
