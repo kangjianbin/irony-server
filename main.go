@@ -6,6 +6,7 @@ import (
 	"github.com/go-clang/v3.9/clang"
 	"github.com/mattn/go-shellwords"
 	"os"
+	"runtime/debug"
 )
 
 var ClangHeaderDir string
@@ -21,6 +22,9 @@ func init() {
 }
 
 func release() {
+	if e := recover(); e != nil {
+		logInfo("%s: %s\n", e, debug.Stack())
+	}
 	releaseLogger()
 }
 
