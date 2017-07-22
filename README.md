@@ -3,7 +3,7 @@ Require [go-clang/V3.9](https://github.com/go-clang/v3.9)
 Still in progress.
 
 
-# build in windows (in msys2, After installing llvm and go-clang)
+# build in windows (in msys2)
 
 ```sh
 export LIBCLANG_DIR=c:/llvm/lib/clang/3.9.1
