@@ -151,6 +151,14 @@ func readCompileOptions(args []string) []string {
 	return args[i+1:]
 }
 
+func dumpFlags(info string, file string, flags []string) {
+	var s string
+	for _, flag := range flags {
+		s += fmt.Sprintf("`%s` ", flag)
+	}
+	logDebug("%s: file: %s, flags: %s\n", info, file, s)
+}
+
 func cmdExit(*Irony, []string) error {
 	os.Exit(0)
 	return nil
@@ -171,11 +179,7 @@ func cmdParse(ir *Irony, args []string) error {
 	}
 	file := fixupFileName(args[1])
 	flags := readCompileOptions(args[2:])
-	var s string
-	for _, flag := range flags {
-		s += fmt.Sprintf("`%s` ", flag)
-	}
-	logDebug("parse: file: %s, flags: %s\n", file, s)
+	dumpFlags("parse", file, flags)
 	ir.Parse(file, flags)
 	return nil
 }
@@ -217,6 +221,7 @@ func cmdComplete(ir *Irony, args []string) error {
 		return &commandError{"Column isn't a integer"}
 	}
 	flags := readCompileOptions(args[4:])
+	dumpFlags("complete", file, flags)
 	ir.Complete(file, uint32(line), uint32(column), flags)
 	return nil
 }

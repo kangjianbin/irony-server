@@ -81,13 +81,13 @@ func (ir *Irony) GetCompileOptions(buildDir string, file string) {
 }
 
 func (irony *Irony) resetCache() {
-	if irony.activeTd != nil {
-		irony.activeTd.Dispose()
-		irony.activeTd = nil
-	}
 	if irony.actCmplRes != nil {
 		irony.actCmplRes.Dispose()
 		irony.actCmplRes = nil
+	}
+	if irony.activeTd != nil {
+		irony.activeTd.Dispose()
+		irony.activeTd = nil
 	}
 }
 

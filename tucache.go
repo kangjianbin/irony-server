@@ -28,7 +28,9 @@ func (td *TUData) Dispose() {
 		msg := fmt.Sprintf("tu for file %s, ref %d", td.file, td.ref)
 		panic(msg)
 	}
+
 	if td.ref == 0 {
+		logDebug("Release tu for %s\n", td.file)
 		td.tu.Dispose()
 	}
 }
@@ -99,22 +101,25 @@ func (tc *TUCache) deleteTU(filename string) {
 	tu.Dispose()
 }
 
-func (tc *TUCache) Parse(filename string, flags []string, unsaved []clang.UnsavedFile) *TUData {
+func (tc *TUCache) Parse(filename string, inflags []string, unsaved []clang.UnsavedFile) *TUData {
 	var tu clang.TranslationUnit
 
-	flags = append([]string{"clang"}, flags...)
+	flags := append([]string{"clang"}, inflags...)
 	if ClangHeaderDir != "" {
 		buildinFlags := []string{"-isystem", ClangHeaderDir}
 		flags = append(flags, buildinFlags...)
 	}
-	td := tc.findTU(filename, flags)
+	td := tc.findTU(filename, inflags)
 	if td == nil {
 		errCode := tc.index.ParseTranslationUnit2FullArgv(filename, flags, unsaved, tc.parseOptions, &tu)
 		if !tu.IsValid() {
 			logInfo("Parse failed: %d\n", errCode)
 			return nil
 		}
-		td = tc.addTU(filename, flags, tu)
+		logDebug("Create new tu for file %s\n", filename)
+		td = tc.addTU(filename, inflags, tu)
+	} else {
+		logDebug("Reusing tu for file %s, cnt: %d\n", filename, td.ref)
 	}
 	tu = td.tu
 	err := tu.ReparseTranslationUnit(unsaved, tu.DefaultReparseOptions())
@@ -131,6 +136,7 @@ func (tc *TUCache) Parse(filename string, flags []string, unsaved []clang.Unsave
 func (tc *TUCache) GenTU(file string, flags []string, unsaved []clang.UnsavedFile) *TUData {
 	td := tc.findTU(file, flags)
 	if td != nil {
+		logDebug("Gen Reusing tu for file %s, cnt: %d\n", file, td.ref)
 		td.Ref()
 		return td
 	}
