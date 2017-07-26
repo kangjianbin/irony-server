@@ -2,23 +2,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-clang/v3.9/clang"
 )
 
 type TUData struct {
-	tu    clang.TranslationUnit
+	tu    TranslationUnit
 	file  string
 	flags []string
 	ref   int
 }
 
 type TUCache struct {
-	index        clang.Index
+	index        Index
 	parseOptions uint32
 	tuMap        map[string]*TUData
 }
 
-func newTUData(tu clang.TranslationUnit, file string, flags []string) *TUData {
+func newTUData(tu TranslationUnit, file string, flags []string) *TUData {
 	return &TUData{tu, file, flags, 1}
 }
 
@@ -52,11 +51,11 @@ func flagsIsMatch(flags1 []string, flags2 []string) bool {
 func NewTuCache() *TUCache {
 	var tc TUCache
 
-	tc.index = clang.NewIndex(0, 0)
-	tc.parseOptions = clang.DefaultEditingTranslationUnitOptions()
-	tc.parseOptions |= clang.TranslationUnit_DetailedPreprocessingRecord |
-		clang.TranslationUnit_Incomplete | clang.TranslationUnit_CreatePreambleOnFirstParse |
-		clang.TranslationUnit_KeepGoing | clang.TranslationUnit_IncludeBriefCommentsInCodeCompletion
+	tc.index = NewIndex(0, 0)
+	tc.parseOptions = DefaultEditingTranslationUnitOptions()
+	tc.parseOptions |= TranslationUnit_DetailedPreprocessingRecord |
+		TranslationUnit_Incomplete | TranslationUnit_CreatePreambleOnFirstParse |
+		TranslationUnit_KeepGoing | TranslationUnit_IncludeBriefCommentsInCodeCompletion
 	tc.tuMap = make(map[string]*TUData)
 	return &tc
 }
@@ -81,7 +80,7 @@ func (tc *TUCache) findTU(file string, flags []string) *TUData {
 	return td
 }
 
-func (tc *TUCache) addTU(filename string, flags []string, tu clang.TranslationUnit) *TUData {
+func (tc *TUCache) addTU(filename string, flags []string, tu TranslationUnit) *TUData {
 	if _, ok := tc.tuMap[filename]; ok {
 		exitError("BUG, tu %s already exists\n", filename)
 	}
@@ -99,8 +98,8 @@ func (tc *TUCache) deleteTU(filename string) {
 	tu.Dispose()
 }
 
-func (tc *TUCache) Parse(filename string, flags []string, unsaved []clang.UnsavedFile) *TUData {
-	var tu clang.TranslationUnit
+func (tc *TUCache) Parse(filename string, flags []string, unsaved []UnsavedFile) *TUData {
+	var tu TranslationUnit
 
 	flags = append([]string{"clang"}, flags...)
 	if ClangHeaderDir != "" {
@@ -128,7 +127,7 @@ func (tc *TUCache) Parse(filename string, flags []string, unsaved []clang.Unsave
 	return td
 }
 
-func (tc *TUCache) GenTU(file string, flags []string, unsaved []clang.UnsavedFile) *TUData {
+func (tc *TUCache) GenTU(file string, flags []string, unsaved []UnsavedFile) *TUData {
 	td := tc.findTU(file, flags)
 	if td != nil {
 		td.Ref()

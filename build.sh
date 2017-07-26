@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+source env.sh
 
 if [ -z "$LIBCLANG_DIR" ]; then
     LIBCLANG_DIR=$(llvm-config --prefix)/lib/clang/$(llvm-config --version)
