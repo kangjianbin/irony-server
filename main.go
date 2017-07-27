@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/go-clang/v3.9/clang"
 	"github.com/mattn/go-shellwords"
 	"os"
 	"runtime/debug"
@@ -13,7 +12,7 @@ var ClangHeaderDir string
 
 func showVersion() {
 	fmt.Printf("%s version %s\n", myApp, GetVersion())
-	fmt.Println(clang.GetClangVersion())
+	fmt.Println(GetClangVersion())
 }
 
 func init() {

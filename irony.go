@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	myVersion = "1.0.0"
+	myVersion     = "1.0.0"
+	MaxCandidates = 20
 )
 
 type Irony struct {
@@ -288,10 +289,15 @@ func (irony *Irony) Candidates() {
 		fmt.Printf("nil\n")
 		return
 	}
-	cmpl := irony.actCmplRes
+	results := irony.actCmplRes.Results()
+	num := len(results)
+	// if num > MaxCandidates {
+	// 	num = MaxCandidates
+	// }
+
 	echoInfo("(")
-	for _, res := range cmpl.Results() {
-		dumpCandidate(res)
+	for i := 0; i < num; i += 1 {
+		dumpCandidate(results[i])
 	}
 	echoInfo(")")
 }

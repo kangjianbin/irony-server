@@ -22,6 +22,13 @@ func SortCodeCompletionResults(results []CompletionResult) {
 	C.clang_sortCodeCompletionResults(cp_results, C.uint(len(results)))
 }
 
+func GetClangVersion() string {
+	o := cxstring{C.clang_getClangVersion()}
+	defer o.Dispose()
+
+	return o.String()
+}
+
 func NewIndex(excludeDeclarationsFromPCH int32, displayDiagnostics int32) Index {
 	return Index{C.clang_createIndex(C.int(excludeDeclarationsFromPCH), C.int(displayDiagnostics))}
 }
