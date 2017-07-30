@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -284,20 +286,52 @@ func dumpCandidate(res CompletionResult) {
 
 }
 
-func (irony *Irony) Candidates() {
+func shrinkResult(results []CompletionResult) []CompletionResult {
+	sort.Slice(results, func(i, j int) bool {
+		pi := results[i].CompletionString().Priority()
+		pj := results[j].CompletionString().Priority()
+		return pi > pj
+	})
+	return results
+}
+
+func getTypedText(r CompletionResult) string {
+	cmplString := r.CompletionString()
+	for i := uint32(0); i < cmplString.NumChunks(); i += 1 {
+		kind := cmplString.ChunkKind(i)
+		if kind == CompletionChunk_TypedText {
+			return cmplString.ChunkText(i)
+		}
+	}
+	return ""
+}
+
+func (irony *Irony) applyFilter(results []CompletionResult, prefix string) []CompletionResult {
+	if prefix == "" || prefix == "*" {
+		return shrinkResult(results)
+	}
+	var filtered []CompletionResult
+	for _, r := range results {
+		text := getTypedText(r)
+		if strings.HasPrefix(text, prefix) {
+			filtered = append(filtered, r)
+		}
+	}
+	return shrinkResult(filtered)
+}
+
+func (irony *Irony) Candidates(prefix string) {
 	if irony.actCmplRes == nil {
 		fmt.Printf("nil\n")
 		return
 	}
-	results := irony.actCmplRes.Results()
-	num := len(results)
-	// if num > MaxCandidates {
-	// 	num = MaxCandidates
-	// }
+
+	cmpl := irony.actCmplRes
+	filteredResults := irony.applyFilter(cmpl.Results(), prefix)
 
 	echoInfo("(")
-	for i := 0; i < num; i += 1 {
-		dumpCandidate(results[i])
+	for _, res := range filteredResults {
+		dumpCandidate(res)
 	}
 	echoInfo(")")
 }

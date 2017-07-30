@@ -227,7 +227,11 @@ func cmdComplete(ir *Irony, args []string) error {
 }
 
 func cmdCandidates(ir *Irony, args []string) error {
-	ir.Candidates()
+	prefix := ""
+	if len(args) >= 2 {
+		prefix = args[1]
+	}
+	ir.Candidates(prefix)
 	return nil
 }
 
