@@ -30,5 +30,5 @@ else
     fi
 fi
 
-clang_header="$LLVM_DIR/lib/clang/*/include"
+clang_header=$(ls -d $LLVM_DIR/lib/clang/*/include)
 [ -e $clang_header ] && export LIBCLANG_HEADER="$clang_header"

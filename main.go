@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	"github.com/mattn/go-shellwords"
 	"os"
 	"runtime/debug"
 )
@@ -90,10 +90,86 @@ func getCmdFromCliFunc(args []string) func() []string {
 	return f
 }
 
+func quoteParse(line string) ([]string, error) {
+	args := []string{}
+	buf := ""
+	var escaped, doubleQuoted, singleQuoted bool
+
+	got := false
+
+	addArgs := func() {
+		args = append(args, buf)
+		got = false
+		buf = ""
+	}
+
+	isSpace := func(r rune) bool {
+		switch r {
+		case ' ', '\t', '\r', '\n':
+			return true
+		}
+		return false
+	}
+
+	for _, r := range line {
+		if escaped {
+			buf += string(r)
+			escaped = false
+			continue
+		}
+
+		if r == '\\' {
+			escaped = true
+			continue
+		}
+
+		if isSpace(r) {
+			if singleQuoted || doubleQuoted {
+				buf += string(r)
+			} else if got {
+				addArgs()
+			}
+			continue
+		}
+
+		switch r {
+		case '"':
+			if !singleQuoted {
+				doubleQuoted = !doubleQuoted
+				if !doubleQuoted {
+					addArgs()
+				}
+				continue
+			}
+		case '\'':
+			if !doubleQuoted {
+				singleQuoted = !singleQuoted
+				if !singleQuoted {
+					addArgs()
+				}
+				continue
+			}
+		}
+		got = true
+		buf += string(r)
+	}
+
+	if got {
+		args = append(args, buf)
+	}
+
+	if escaped || singleQuoted || doubleQuoted {
+		return nil, errors.New("invalid command line string")
+	}
+
+	return args, nil
+}
+
 func getCmdFromStdin() []string {
 	scanner := bufio.NewScanner(os.Stdin)
 	if scanner.Scan() {
-		args, err := shellwords.Parse(scanner.Text())
+		text := scanner.Text()
+		args, err := quoteParse(text)
 		if err == nil {
 			logDebug("Get cmd %s\n", args)
 			return args

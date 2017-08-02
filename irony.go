@@ -286,12 +286,15 @@ func dumpCandidate(res CompletionResult) {
 
 }
 
-func shrinkResult(results []CompletionResult) []CompletionResult {
+func sortResults(results []CompletionResult) {
 	sort.Slice(results, func(i, j int) bool {
 		pi := results[i].CompletionString().Priority()
 		pj := results[j].CompletionString().Priority()
 		return pi > pj
 	})
+}
+
+func shrinkResult(results []CompletionResult) []CompletionResult {
 	return results
 }
 
@@ -329,11 +332,11 @@ func (irony *Irony) Candidates(prefix string) {
 	cmpl := irony.actCmplRes
 	filteredResults := irony.applyFilter(cmpl.Results(), prefix)
 
-	echoInfo("(")
+	echoInfo("(\n")
 	for _, res := range filteredResults {
 		dumpCandidate(res)
 	}
-	echoInfo(")")
+	echoInfo(")\n")
 }
 
 func (irony *Irony) GetType(line, col uint32) {
