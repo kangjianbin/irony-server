@@ -199,7 +199,7 @@ func getAvaliString(avail AvailabilityKind) string {
 	return ""
 }
 
-func dumpCandidate(res CompletionResult) {
+func dumpCandidate(res CompletionResult, filter func(string) bool) {
 	cmplString := res.CompletionString()
 	avail := cmplString.Availability()
 	if avail == Availability_NotAvailable {
@@ -271,6 +271,9 @@ func dumpCandidate(res CompletionResult) {
 		}
 		if kind == CompletionChunk_TypedText && !typedTextSet {
 			typedtext = chunkText
+			if !filter(typedtext) {
+				return
+			}
 			typedTextSet = true
 			annotationStart = len(prototype)
 		}
@@ -309,32 +312,32 @@ func getTypedText(r CompletionResult) string {
 	return ""
 }
 
-func (irony *Irony) applyFilter(results []CompletionResult, prefix string) []CompletionResult {
-	if prefix == "" || prefix == "*" {
-		return shrinkResult(results)
-	}
-	var filtered []CompletionResult
-	for _, r := range results {
-		text := getTypedText(r)
-		if strings.HasPrefix(text, prefix) {
-			filtered = append(filtered, r)
-		}
-	}
-	return shrinkResult(filtered)
-}
-
-func (irony *Irony) Candidates(prefix string) {
+func (irony *Irony) Candidates(prefix string, ignoreCase bool) {
 	if irony.actCmplRes == nil {
 		fmt.Printf("nil\n")
 		return
 	}
 
 	cmpl := irony.actCmplRes
-	filteredResults := irony.applyFilter(cmpl.Results(), prefix)
+	var filter func(string) bool
+
+	if ignoreCase {
+		prefix = strings.ToLower(prefix)
+		filter = func(text string) bool {
+			if len(text) < len(prefix) {
+				return false
+			}
+			return strings.ToLower(text[:len(prefix)]) == prefix
+		}
+	} else {
+		filter = func(text string) bool {
+			return strings.HasPrefix(text, prefix)
+		}
+	}
 
 	echoInfo("(\n")
-	for _, res := range filteredResults {
-		dumpCandidate(res)
+	for _, res := range cmpl.Results() {
+		dumpCandidate(res, filter)
 	}
 	echoInfo(")\n")
 }

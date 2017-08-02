@@ -125,6 +125,16 @@ func parseUint(arg string) (uint32, error) {
 	return uint32(v), nil
 }
 
+func parseBool(arg string) (bool, error) {
+	if arg == "on" {
+		return true, nil
+	}
+	if arg == "off" {
+		return false, nil
+	}
+	return false, &commandError{"Invalid boolean value"}
+}
+
 func cmdHelp(*Irony, []string) error {
 	printHelp()
 	return nil
@@ -228,10 +238,20 @@ func cmdComplete(ir *Irony, args []string) error {
 
 func cmdCandidates(ir *Irony, args []string) error {
 	prefix := ""
+	ignore_case := false
+
 	if len(args) >= 2 {
 		prefix = args[1]
 	}
-	ir.Candidates(prefix)
+	if len(args) >= 3 {
+		v, err := parseBool(args[2])
+		if err != nil {
+			return err
+		}
+		ignore_case = v
+	}
+
+	ir.Candidates(prefix, ignore_case)
 	return nil
 }
 
