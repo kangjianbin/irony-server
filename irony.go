@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -312,7 +313,24 @@ func getTypedText(r CompletionResult) string {
 	return ""
 }
 
-func (irony *Irony) Candidates(prefix string, ignoreCase bool) {
+func isCaseSensitive(prefix string, caseStyle string) bool {
+	if caseStyle == "" || caseStyle == "nil" {
+		return true
+	}
+	if caseStyle == "smart" {
+		for _, v := range prefix {
+			if unicode.IsUpper(v) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// by default, always do case-insensitive matching
+	return false
+}
+
+func (irony *Irony) Candidates(prefix string, caseStyle string) {
 	if irony.actCmplRes == nil {
 		fmt.Printf("nil\n")
 		return
@@ -321,17 +339,18 @@ func (irony *Irony) Candidates(prefix string, ignoreCase bool) {
 	cmpl := irony.actCmplRes
 	var filter func(string) bool
 
-	if ignoreCase {
+	caseSensitive := isCaseSensitive(prefix, caseStyle)
+	if caseSensitive {
+		filter = func(text string) bool {
+			return strings.HasPrefix(text, prefix)
+		}
+	} else {
 		prefix = strings.ToLower(prefix)
 		filter = func(text string) bool {
 			if len(text) < len(prefix) {
 				return false
 			}
 			return strings.ToLower(text[:len(prefix)]) == prefix
-		}
-	} else {
-		filter = func(text string) bool {
-			return strings.HasPrefix(text, prefix)
 		}
 	}
 

@@ -238,20 +238,16 @@ func cmdComplete(ir *Irony, args []string) error {
 
 func cmdCandidates(ir *Irony, args []string) error {
 	prefix := ""
-	ignore_case := false
+	caseStyle := ""
 
 	if len(args) >= 2 {
 		prefix = args[1]
 	}
 	if len(args) >= 3 {
-		v, err := parseBool(args[2])
-		if err != nil {
-			return err
-		}
-		ignore_case = v
+		caseStyle = args[2]
 	}
 
-	ir.Candidates(prefix, ignore_case)
+	ir.Candidates(prefix, caseStyle)
 	return nil
 }
 
