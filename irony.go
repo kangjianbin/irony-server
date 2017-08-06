@@ -14,6 +14,12 @@ const (
 	MaxCandidates = 20
 )
 
+const (
+	PrefixMatchExact uint = iota
+	PrefixMatchCaseInsensitive
+	PrefixMatchSmartCase
+)
+
 type Irony struct {
 	Debug        bool
 	cache        *TUCache
@@ -279,6 +285,9 @@ func dumpCandidate(res CompletionResult, filter func(string) bool) {
 			annotationStart = len(prototype)
 		}
 	}
+	if !typedTextSet {
+		return
+	}
 	s := fmt.Sprintf(`  (%s %d %s %s %s %d (%s`,
 		quote(typedtext), priority, quote(resultType), quote(brief),
 		quote(prototype), annotationStart, quote(postCompCar))
@@ -313,24 +322,23 @@ func getTypedText(r CompletionResult) string {
 	return ""
 }
 
-func isCaseSensitive(prefix string, caseStyle string) bool {
-	if caseStyle == "" || caseStyle == "nil" {
-		return true
-	}
-	if caseStyle == "smart" {
+func isStyleCaseInsensitive(prefix string, style uint) bool {
+	if style == PrefixMatchSmartCase {
+		hasUpper := false
 		for _, v := range prefix {
 			if unicode.IsUpper(v) {
-				return true
+				hasUpper = true
+				break
 			}
 		}
-		return false
+		if !hasUpper {
+			style = PrefixMatchCaseInsensitive
+		}
 	}
-
-	// by default, always do case-insensitive matching
-	return false
+	return style == PrefixMatchCaseInsensitive
 }
 
-func (irony *Irony) Candidates(prefix string, caseStyle string) {
+func (irony *Irony) Candidates(prefix string, style uint) {
 	if irony.actCmplRes == nil {
 		fmt.Printf("nil\n")
 		return
@@ -339,18 +347,18 @@ func (irony *Irony) Candidates(prefix string, caseStyle string) {
 	cmpl := irony.actCmplRes
 	var filter func(string) bool
 
-	caseSensitive := isCaseSensitive(prefix, caseStyle)
-	if caseSensitive {
-		filter = func(text string) bool {
-			return strings.HasPrefix(text, prefix)
-		}
-	} else {
+	caseInsensitive := isStyleCaseInsensitive(prefix, style)
+	if caseInsensitive {
 		prefix = strings.ToLower(prefix)
 		filter = func(text string) bool {
 			if len(text) < len(prefix) {
 				return false
 			}
 			return strings.ToLower(text[:len(prefix)]) == prefix
+		}
+	} else {
+		filter = func(text string) bool {
+			return strings.HasPrefix(text, prefix)
 		}
 	}
 

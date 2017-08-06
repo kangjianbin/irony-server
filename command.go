@@ -236,18 +236,31 @@ func cmdComplete(ir *Irony, args []string) error {
 	return nil
 }
 
+var prefixMatchMap = map[string]uint{
+	"exact":            PrefixMatchExact,
+	"case-insensitive": PrefixMatchCaseInsensitive,
+	"smart-case":       PrefixMatchSmartCase,
+}
+
+func getMatchingStyle(arg string) uint {
+	if v, ok := prefixMatchMap[arg]; ok {
+		return v
+	}
+	return PrefixMatchExact
+}
+
 func cmdCandidates(ir *Irony, args []string) error {
 	prefix := ""
-	caseStyle := ""
+	style := PrefixMatchExact
 
 	if len(args) >= 2 {
 		prefix = args[1]
 	}
 	if len(args) >= 3 {
-		caseStyle = args[2]
+		style = getMatchingStyle(args[2])
 	}
 
-	ir.Candidates(prefix, caseStyle)
+	ir.Candidates(prefix, style)
 	return nil
 }
 
