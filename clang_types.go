@@ -2,6 +2,7 @@ package main
 
 // #cgo LDFLAGS: -lclang
 // #include <clang-c/Index.h>
+// #include <clang-c/CXCompilationDatabase.h>
 // #include <stdlib.h>
 import "C"
 
@@ -326,3 +327,22 @@ const (
 	// Vertical space ('\n'), after which it is generally a good idea to perform indentation.
 	CompletionChunk_VerticalSpace = C.CXCompletionChunk_VerticalSpace
 )
+
+type CompilationDatabase struct {
+	c C.CXCompilationDatabase
+}
+
+type CompilationDatabase_Error int32
+
+const (
+	CompilationDatabase_NoError            CompilationDatabase_Error = C.CXCompilationDatabase_NoError
+	CompilationDatabase_CanNotLoadDatabase                           = C.CXCompilationDatabase_CanNotLoadDatabase
+)
+
+type CompileCommands struct {
+	c C.CXCompileCommands
+}
+
+type CompileCommand struct {
+	c C.CXCompileCommand
+}

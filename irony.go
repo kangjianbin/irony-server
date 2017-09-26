@@ -69,7 +69,28 @@ func (irony *Irony) Dispose() {
 }
 
 func (ir *Irony) GetCompileOptions(buildDir string, file string) {
-	echoInfo("nil")
+	err, db := CompilationDatabaseFromDirectory(buildDir)
+	if err != CompilationDatabase_NoError {
+		echoError("cannot-load-database \"failed to load compilation database from directory\" %s",
+			quote(buildDir))
+		return
+	}
+	defer db.Dispose()
+	ccs := db.CompileCommands(file)
+	defer ccs.Dispose()
+	var cmds []string
+	for i := uint32(0); i < ccs.Size(); i += 1 {
+		cc := ccs.Command(i)
+		var s []string
+		for j := uint32(0); j < cc.NumArgs(); j += 1 {
+			s = append(s, quote(cc.Arg(j)))
+		}
+		cmd := strings.Join(s, " ")
+		cmd = "((" + cmd + ") . " + quote(cc.Directory()) + ")"
+		cmds = append(cmds, cmd)
+	}
+	allCmds := strings.Join(cmds, "\n")
+	echoInfo("(success . (\n%s\n))\n", allCmds)
 }
 
 func (irony *Irony) resetCache() {

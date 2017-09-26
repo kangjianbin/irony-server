@@ -2,6 +2,7 @@ package main
 
 // #cgo LDFLAGS: -lclang
 // #include <clang-c/Index.h>
+// #include <clang-c/CXCompilationDatabase.h>
 // #include <stdlib.h>
 import "C"
 import "reflect"
@@ -242,6 +243,62 @@ func (t Type) CanonicalType() Type {
 
 func (t Type) Spelling() string {
 	o := cxstring{C.clang_getTypeSpelling(t.c)}
+	defer o.Dispose()
+
+	return o.String()
+}
+
+func CompilationDatabaseFromDirectory(dir string) (CompilationDatabase_Error, CompilationDatabase) {
+	var errorCode C.CXCompilationDatabase_Error
+	c_buildDir := C.CString(dir)
+	defer C.free(unsafe.Pointer(c_buildDir))
+	o := CompilationDatabase{C.clang_CompilationDatabase_fromDirectory(c_buildDir, &errorCode)}
+	return CompilationDatabase_Error(errorCode), o
+}
+
+func (cd CompilationDatabase) Dispose() {
+	C.clang_CompilationDatabase_dispose(cd.c)
+}
+
+func (cd CompilationDatabase) CompileCommands(completeFileName string) CompileCommands {
+	c_completeFilename := C.CString(completeFileName)
+	defer C.free(unsafe.Pointer(c_completeFilename))
+
+	return CompileCommands{C.clang_CompilationDatabase_getCompileCommands(cd.c, c_completeFilename)}
+}
+
+func (cc CompileCommands) Dispose() {
+	C.clang_CompileCommands_dispose(cc.c)
+}
+
+func (cc CompileCommands) Size() uint32 {
+	return uint32(C.clang_CompileCommands_getSize(cc.c))
+}
+
+func (cc CompileCommands) Command(i uint32) CompileCommand {
+	return CompileCommand{C.clang_CompileCommands_getCommand(cc.c, C.uint(i))}
+}
+
+func (cc CompileCommand) Directory() string {
+	o := cxstring{C.clang_CompileCommand_getDirectory(cc.c)}
+	defer o.Dispose()
+
+	return o.String()
+}
+
+func (cc CompileCommand) Filename() string {
+	o := cxstring{C.clang_CompileCommand_getFilename(cc.c)}
+	defer o.Dispose()
+
+	return o.String()
+}
+
+func (cc CompileCommand) NumArgs() uint32 {
+	return uint32(C.clang_CompileCommand_getNumArgs(cc.c))
+}
+
+func (cc CompileCommand) Arg(i uint32) string {
+	o := cxstring{C.clang_CompileCommand_getArg(cc.c, C.uint(i))}
 	defer o.Dispose()
 
 	return o.String()
