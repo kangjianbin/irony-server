@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 type TUData struct {
@@ -100,6 +101,18 @@ func (tc *TUCache) deleteTU(filename string) {
 	tu.Dispose()
 }
 
+func (tc *TUCache) tryParse(filename string, flags []string, unsaved []UnsavedFile, tu *TranslationUnit) ErrorCode {
+	var errCode ErrorCode
+	for i := 0; i < 3; i += 1 {
+		errCode = tc.index.ParseTranslationUnit2FullArgv(filename, flags, unsaved, tc.parseOptions, tu)
+		if errCode != Error_Crashed {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return errCode
+}
+
 func (tc *TUCache) Parse(filename string, inflags []string, unsaved []UnsavedFile) *TUData {
 	var tu TranslationUnit
 
@@ -110,7 +123,7 @@ func (tc *TUCache) Parse(filename string, inflags []string, unsaved []UnsavedFil
 	}
 	td := tc.findTU(filename, inflags)
 	if td == nil {
-		errCode := tc.index.ParseTranslationUnit2FullArgv(filename, flags, unsaved, tc.parseOptions, &tu)
+		errCode := tc.tryParse(filename, flags, unsaved, &tu)
 		if !tu.IsValid() {
 			logInfo("Parse failed: %d\n", errCode)
 			return nil
